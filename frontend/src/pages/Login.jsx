@@ -11,48 +11,70 @@ export default function Login({ onLogin }) {
     event.preventDefault();
     setError('');
     setLoading(true);
+
     try {
-      const response = await client.post('/api/auth/login', { username, password });
+      const formData = new URLSearchParams();
+      formData.append('username', username);
+      formData.append('password', password);
+
+      const response = await client.post('/api/auth/login', formData, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+
       onLogin(response.data);
     } catch (err) {
-      setError(err.response?.data?.detail ?? 'Login failed');
+      console.error(err.response?.data);
+
+      const detail = err.response?.data?.detail;
+      setError(
+        Array.isArray(detail) ? detail[0]?.msg : detail || 'Login failed'
+      );
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center p-6">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm bg-white border border-slate-200 rounded-lg p-6 space-y-4">
-        <h1 className="text-xl font-bold text-slate-900">Sign in</h1>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <label className="block text-sm text-slate-700">
-          Username
-          <input
-            className="mt-1 w-full border border-slate-300 rounded px-3 py-2"
-            autoComplete="username"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            required
-          />
-        </label>
-        <label className="block text-sm text-slate-700">
-          Password
-          <input
-            className="mt-1 w-full border border-slate-300 rounded px-3 py-2"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
-        </label>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white w-full max-w-sm p-6 rounded-lg shadow space-y-4"
+      >
+        <h1 className="text-xl font-bold text-slate-900">
+          okDriver CCTV Platform
+        </h1>
+        <p className="text-sm text-slate-500">Sign in to continue</p>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-2 rounded">
+            {error}
+          </div>
+        )}
+
+        <input
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="border rounded p-2 w-full"
+          autoComplete="username"
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="border rounded p-2 w-full"
+          autoComplete="current-password"
+          required
+        />
+
         <button
-          className="w-full bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 disabled:opacity-60"
           type="submit"
           disabled={loading}
+          className="bg-blue-600 text-white w-full py-2 rounded-lg font-semibold disabled:opacity-60"
         >
-          {loading ? 'Signing in…' : 'Sign in'}
+          {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
     </div>
