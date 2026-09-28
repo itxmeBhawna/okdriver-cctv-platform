@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from app.core.db import get_db
 from app.core.security import get_current_admin, get_current_operator
+from app.models.audit_log import AuditLog
 from app.models.watchlist import WatchlistEntry
 from app.schemas.watchlist import WatchlistCreate, WatchlistUpdate, WatchlistOut
 
@@ -17,6 +18,8 @@ router = APIRouter(
 def create_entry(payload: WatchlistCreate, db: Session = Depends(get_db)):
     entry = WatchlistEntry(**payload.model_dump())
     db.add(entry)
+    db.flush()
+    db.add(AuditLog(entity_type="watchlist_entry", entity_id=str(entry.id), action="created"))
     db.commit()
     db.refresh(entry)
     return entry
@@ -47,6 +50,7 @@ def update_entry(entry_id: int, payload: WatchlistUpdate, db: Session = Depends(
         raise HTTPException(status_code=404, detail="Watchlist entry not found")
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(entry, field, value)
+    db.add(AuditLog(entity_type="watchlist_entry", entity_id=str(entry.id), action="updated"))
     db.commit()
     db.refresh(entry)
     return entry
@@ -58,6 +62,7 @@ def deactivate_entry(entry_id: int, db: Session = Depends(get_db)):
     if not entry:
         raise HTTPException(status_code=404, detail="Watchlist entry not found")
     entry.is_active = False
+    db.add(AuditLog(entity_type="watchlist_entry", entity_id=str(entry.id), action="deactivated"))
     db.commit()
     db.refresh(entry)
     return entry

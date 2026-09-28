@@ -4,6 +4,7 @@ from typing import Optional
 from datetime import datetime
 from app.core.db import get_db
 from app.core.security import get_current_operator
+from app.models.audit_log import AuditLog
 from app.models.alert import Alert
 from app.schemas.alert import AlertOut, AlertStatusUpdate
 
@@ -36,6 +37,7 @@ def acknowledge_alert(alert_id: int, payload: AlertStatusUpdate, db: Session = D
     alert.status = "acknowledged"
     alert.acknowledged_at = datetime.utcnow()
     alert.acknowledged_by = payload.acknowledged_by
+    db.add(AuditLog(entity_type="alert", entity_id=str(alert.id), action="acknowledged"))
     db.commit()
     db.refresh(alert)
     return alert
@@ -48,6 +50,7 @@ def resolve_alert(alert_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Alert not found")
     alert.status = "resolved"
     alert.resolved_at = datetime.utcnow()
+    db.add(AuditLog(entity_type="alert", entity_id=str(alert.id), action="resolved"))
     db.commit()
     db.refresh(alert)
     return alert
