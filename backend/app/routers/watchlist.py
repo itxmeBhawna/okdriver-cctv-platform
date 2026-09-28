@@ -1,0 +1,58 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from typing import Optional
+from app.core.db import get_db
+from app.models.watchlist import WatchlistEntry
+from app.schemas.watchlist import WatchlistCreate, WatchlistUpdate, WatchlistOut
+
+router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
+
+
+@router.post("/", response_model=WatchlistOut, status_code=201)
+def create_entry(payload: WatchlistCreate, db: Session = Depends(get_db)):
+    entry = WatchlistEntry(**payload.model_dump())
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+@router.get("/", response_model=list[WatchlistOut])
+def list_entries(
+    entity_type: Optional[str] = None,
+    category: Optional[str] = None,
+    is_active: bool = True,
+    search: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    query = db.query(WatchlistEntry).filter(WatchlistEntry.is_active == is_active)
+    if entity_type:
+        query = query.filter(WatchlistEntry.entity_type == entity_type)
+    if category:
+        query = query.filter(WatchlistEntry.category == category)
+    if search:
+        query = query.filter(WatchlistEntry.identifier.ilike(f"%{search}%"))
+    return query.order_by(WatchlistEntry.created_at.desc()).all()
+
+
+@router.put("/{entry_id}", response_model=WatchlistOut)
+def update_entry(entry_id: int, payload: WatchlistUpdate, db: Session = Depends(get_db)):
+    entry = db.query(WatchlistEntry).filter(WatchlistEntry.id == entry_id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Watchlist entry not found")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(entry, field, value)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+@router.delete("/{entry_id}", response_model=WatchlistOut)
+def deactivate_entry(entry_id: int, db: Session = Depends(get_db)):
+    entry = db.query(WatchlistEntry).filter(WatchlistEntry.id == entry_id).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Watchlist entry not found")
+    entry.is_active = False
+    db.commit()
+    db.refresh(entry)
+    return entry
