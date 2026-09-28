@@ -4,11 +4,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
+from app.core.security import get_current_admin, get_current_operator
 from app.models.camera import Camera
 from app.models.camera_audit_log import CameraAuditLog
 from app.schemas.camera import AuditLogOut, CameraCreate, CameraOut, CameraUpdate
 
-router = APIRouter(prefix="/api/cameras", tags=["cameras"])
+router = APIRouter(
+    prefix="/api/cameras",
+    tags=["cameras"],
+    dependencies=[Depends(get_current_operator)],
+)
 
 
 def _get_camera_or_404(camera_id: str, db: Session) -> Camera:
@@ -22,7 +27,7 @@ def _write_audit(db: Session, camera_id: str, action: str, detail: str = None):
     db.add(CameraAuditLog(camera_id=camera_id, action=action, detail=detail))
 
 
-@router.post("/", response_model=CameraOut, status_code=201)
+@router.post("/", response_model=CameraOut, status_code=201, dependencies=[Depends(get_current_admin)])
 def create_camera(payload: CameraCreate, db: Session = Depends(get_db)):
     if db.query(Camera).filter(Camera.camera_id == payload.camera_id).first():
         raise HTTPException(status_code=409, detail="camera_id already exists")
@@ -75,7 +80,7 @@ def get_camera(camera_id: str, db: Session = Depends(get_db)):
     return _get_camera_or_404(camera_id, db)
 
 
-@router.put("/{camera_id}", response_model=CameraOut)
+@router.put("/{camera_id}", response_model=CameraOut, dependencies=[Depends(get_current_admin)])
 def update_camera(camera_id: str, payload: CameraUpdate, db: Session = Depends(get_db)):
     cam = _get_camera_or_404(camera_id, db)
     changes = []
@@ -91,7 +96,7 @@ def update_camera(camera_id: str, payload: CameraUpdate, db: Session = Depends(g
     return cam
 
 
-@router.patch("/{camera_id}/disable", response_model=CameraOut)
+@router.patch("/{camera_id}/disable", response_model=CameraOut, dependencies=[Depends(get_current_admin)])
 def disable_camera(camera_id: str, db: Session = Depends(get_db)):
     cam = _get_camera_or_404(camera_id, db)
     cam.is_disabled = True

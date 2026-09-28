@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.db import get_db
+from app.core.security import get_current_operator
 from app.models.detection_event import DetectionEvent
 from app.models.camera import Camera
 
-router = APIRouter(prefix="/api/trace", tags=["trace"])
+router = APIRouter(
+    prefix="/api/trace",
+    tags=["trace"],
+    dependencies=[Depends(get_current_operator)],
+)
 
 
 @router.get("/{identifier}")

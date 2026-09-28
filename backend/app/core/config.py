@@ -1,3 +1,6 @@
+from typing import Literal
+
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,7 +11,9 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = ""
     DB_NAME: str = "okdriver_cctv"
     DB_SSL_CA: str = "certs/ca.pem"
-    JWT_SECRET: str = "default_secret"
+    JWT_SECRET: str = Field(min_length=32)
+    JWT_ALGORITHM: Literal["HS256"] = "HS256"
+    JWT_ACCESS_TOKEN_MINUTES: int = Field(default=30, gt=0)
 
     model_config = SettingsConfigDict(
         env_file=".env",

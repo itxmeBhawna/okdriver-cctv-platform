@@ -1,9 +1,12 @@
+import asyncio
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import watchlist, alerts
-from fastapi import WebSocket, WebSocketDisconnect
+from app.routers import watchlist, alerts, auth
+from fastapi import HTTPException, WebSocket, WebSocketDisconnect
 from app.core.ws_manager import manager
-from app.core.db import Base, engine
+from app.core.db import Base, SessionLocal, engine
+from app.core.security import get_current_operator, get_current_user
 import app.models  # noqa: F401 — registers Camera and CameraAuditLog with Base
 from app.routers.cameras import router as cameras_router
 from app.routers import dashboard
@@ -24,6 +27,7 @@ app.add_middleware(
 app.include_router(cameras_router)
 app.include_router(watchlist.router)
 app.include_router(alerts.router)
+app.include_router(auth.router)
 app.include_router(events.router)
 app.include_router(dashboard.router)
 app.include_router(trace.router)
@@ -34,7 +38,26 @@ def health_check():
 
 @app.websocket("/ws/alerts")
 async def websocket_alerts(websocket: WebSocket):
-    await manager.connect(websocket)
+    await websocket.accept()
+    try:
+        token = await asyncio.wait_for(websocket.receive_text(), timeout=5)
+    except asyncio.TimeoutError:
+        await websocket.close(code=1008)
+        return
+    except WebSocketDisconnect:
+        return
+
+    db = SessionLocal()
+    try:
+        user = get_current_user(token=token, db=db)
+        get_current_operator(user=user)
+    except HTTPException:
+        await websocket.close(code=1008)
+        return
+    finally:
+        db.close()
+
+    await manager.connect(websocket, accept=False)
     try:
         while True:
             await websocket.receive_text()  # keeps connection alive, ignores incoming pings

@@ -2,13 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.core.db import get_db
+from app.core.security import get_current_admin, get_current_operator
 from app.models.watchlist import WatchlistEntry
 from app.schemas.watchlist import WatchlistCreate, WatchlistUpdate, WatchlistOut
 
-router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
+router = APIRouter(
+    prefix="/api/watchlist",
+    tags=["watchlist"],
+    dependencies=[Depends(get_current_operator)],
+)
 
 
-@router.post("/", response_model=WatchlistOut, status_code=201)
+@router.post("/", response_model=WatchlistOut, status_code=201, dependencies=[Depends(get_current_admin)])
 def create_entry(payload: WatchlistCreate, db: Session = Depends(get_db)):
     entry = WatchlistEntry(**payload.model_dump())
     db.add(entry)
@@ -35,7 +40,7 @@ def list_entries(
     return query.order_by(WatchlistEntry.created_at.desc()).all()
 
 
-@router.put("/{entry_id}", response_model=WatchlistOut)
+@router.put("/{entry_id}", response_model=WatchlistOut, dependencies=[Depends(get_current_admin)])
 def update_entry(entry_id: int, payload: WatchlistUpdate, db: Session = Depends(get_db)):
     entry = db.query(WatchlistEntry).filter(WatchlistEntry.id == entry_id).first()
     if not entry:
@@ -47,7 +52,7 @@ def update_entry(entry_id: int, payload: WatchlistUpdate, db: Session = Depends(
     return entry
 
 
-@router.delete("/{entry_id}", response_model=WatchlistOut)
+@router.delete("/{entry_id}", response_model=WatchlistOut, dependencies=[Depends(get_current_admin)])
 def deactivate_entry(entry_id: int, db: Session = Depends(get_db)):
     entry = db.query(WatchlistEntry).filter(WatchlistEntry.id == entry_id).first()
     if not entry:

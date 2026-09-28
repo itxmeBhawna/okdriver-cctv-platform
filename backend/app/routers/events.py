@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.core.db import get_db
+from app.core.security import get_current_operator
 from app.core.ws_manager import manager
 from app.models.detection_event import DetectionEvent
 from app.models.alert import Alert
@@ -9,7 +10,11 @@ from app.schemas.detection_event import DetectionEventCreate, DetectionEventOut
 from app.services.matcher import check_watchlist_match
 from app.services.dedup import is_duplicate_alert
 
-router = APIRouter(prefix="/api/events", tags=["events"])
+router = APIRouter(
+    prefix="/api/events",
+    tags=["events"],
+    dependencies=[Depends(get_current_operator)],
+)
 
 
 @router.post("/detection")

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.db import get_db
+from app.core.security import get_current_operator
 from app.models.camera import Camera
 from app.models.alert import Alert
 from app.models.watchlist import WatchlistEntry
@@ -8,7 +9,11 @@ from app.models.detection_event import DetectionEvent
 from app.schemas.alert import AlertOut
 from app.schemas.detection_event import DetectionEventOut
 
-router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+router = APIRouter(
+    prefix="/api/dashboard",
+    tags=["dashboard"],
+    dependencies=[Depends(get_current_operator)],
+)
 
 
 @router.get("/summary")

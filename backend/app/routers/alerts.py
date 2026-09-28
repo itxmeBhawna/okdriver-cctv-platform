@@ -3,10 +3,15 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import datetime
 from app.core.db import get_db
+from app.core.security import get_current_operator
 from app.models.alert import Alert
 from app.schemas.alert import AlertOut, AlertStatusUpdate
 
-router = APIRouter(prefix="/api/alerts", tags=["alerts"])
+router = APIRouter(
+    prefix="/api/alerts",
+    tags=["alerts"],
+    dependencies=[Depends(get_current_operator)],
+)
 
 
 @router.get("/", response_model=list[AlertOut])
