@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.core.db import get_db
+from app.core.rate_limit import rate_limit
 from app.core.security import get_current_operator
 from app.core.ws_manager import manager
 from app.models.detection_event import DetectionEvent
@@ -17,7 +18,7 @@ router = APIRouter(
 )
 
 
-@router.post("/detection")
+@router.post("/detection", dependencies=[Depends(rate_limit(60))])
 async def ingest_detection(payload: DetectionEventCreate, db: Session = Depends(get_db)):
     event = DetectionEvent(**payload.model_dump())
     db.add(event)
