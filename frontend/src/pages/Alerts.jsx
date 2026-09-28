@@ -8,7 +8,7 @@ const severityColors = {
     critical: "bg-red-200 text-red-800",
 };
 
-export default function Alerts() {
+export default function Alerts({ accessToken }) {
     const [alerts, setAlerts] = useState([]);
     const [statusFilter, setStatusFilter] = useState("");
     const [banner, setBanner] = useState(null);
@@ -28,6 +28,7 @@ export default function Alerts() {
     useEffect(() => {
         const ws = new WebSocket("ws://localhost:8000/ws/alerts");
         wsRef.current = ws;
+        ws.onopen = () => ws.send(accessToken);
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
@@ -39,7 +40,7 @@ export default function Alerts() {
         };
 
         return () => ws.close();
-    }, []);
+    }, [accessToken]);
 
     const handleAcknowledge = async (id) => {
         const name = prompt("Your name (for acknowledgment record):");

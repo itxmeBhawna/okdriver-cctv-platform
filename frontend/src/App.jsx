@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
+import client from './api/client';
 import CameraRegistry from './pages/CameraRegistry';
 import Watchlist from "./pages/Watchlist";
 import Alerts from "./pages/Alerts";
@@ -6,9 +8,26 @@ import Events from "./pages/Events";
 import Dashboard from "./pages/Dashboard";
 import VehicleTrace from "./pages/VehicleTrace";
 import LiveFeeds from "./pages/LiveFeeds";
+import Login from './pages/Login';
 
 
 export default function App() {
+  const [session, setSession] = useState(null);
+
+  function handleLogin(data) {
+    client.defaults.headers.common.Authorization = `Bearer ${data.access_token}`;
+    setSession(data);
+  }
+
+  function handleLogout() {
+    delete client.defaults.headers.common.Authorization;
+    setSession(null);
+  }
+
+  function protectedPage(element) {
+    return session ? element : <Navigate to="/login" replace />;
+  }
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -18,6 +37,7 @@ export default function App() {
               okDriver CCTV Platform
             </span>
             <nav className="flex space-x-6">
+              {session && <>
               <Link to="/" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
                 Dashboard
               </Link>
@@ -39,20 +59,28 @@ export default function App() {
               <Link to="/feeds" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
                 Live Feeds
               </Link>
-
+              </>}
             </nav>
+            {session && (
+              <div className="flex items-center gap-3 text-sm">
+                <span>{session.user.username} ({session.user.role})</span>
+                <button onClick={handleLogout} className="text-slate-600 hover:text-slate-900">Sign out</button>
+              </div>
+            )}
           </div>
         </header>
 
         <main className="max-w-7xl mx-auto">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/cameras" element={<CameraRegistry />} />
-            <Route path="/watchlist" element={<Watchlist />} />
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/trace" element={<VehicleTrace />} />
-            <Route path="/feeds" element={<LiveFeeds />} />
+            <Route path="/login" element={session ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />} />
+            <Route path="/" element={protectedPage(<Dashboard accessToken={session?.access_token} />)} />
+            <Route path="/cameras" element={protectedPage(<CameraRegistry />)} />
+            <Route path="/watchlist" element={protectedPage(<Watchlist />)} />
+            <Route path="/alerts" element={protectedPage(<Alerts accessToken={session?.access_token} />)} />
+            <Route path="/events" element={protectedPage(<Events />)} />
+            <Route path="/trace" element={protectedPage(<VehicleTrace />)} />
+            <Route path="/feeds" element={protectedPage(<LiveFeeds />)} />
+            <Route path="*" element={<Navigate to={session ? "/" : "/login"} replace />} />
           </Routes>
         </main>
       </div>

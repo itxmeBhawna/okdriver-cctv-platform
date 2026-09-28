@@ -14,7 +14,7 @@ const statusColors = {
     degraded: "bg-yellow-500",
 };
 
-export default function Dashboard() {
+export default function Dashboard({ accessToken }) {
     const [summary, setSummary] = useState(null);
     const [cameras, setCameras] = useState([]);
     const [search, setSearch] = useState("");
@@ -34,9 +34,10 @@ export default function Dashboard() {
 
     useEffect(() => {
         const ws = new WebSocket("ws://localhost:8000/ws/alerts");
+        ws.onopen = () => ws.send(accessToken);
         ws.onmessage = () => load();
         return () => ws.close();
-    }, []);
+    }, [accessToken]);
 
     if (!summary) return <div className="p-6">Loading...</div>;
 
