@@ -306,28 +306,26 @@ Use `/docs` to exercise authenticated routes. Login uses `application/x-www-form
 
 ## Screenshots
 
-Add screenshots to `docs/screenshots/` and update the placeholders below when available.
-
 ### Dashboard
 
-_Screenshot placeholder._
+<img width="1915" height="844" alt="Screenshot 2026-10-01 211046" src="https://github.com/user-attachments/assets/e4da5678-75be-4c8c-a951-c6d7fb4fc424" />
 
 ### Camera Registry
 
-_Screenshot placeholder._
+<img width="1909" height="840" alt="Screenshot 2026-10-01 211641" src="https://github.com/user-attachments/assets/9a1cb55e-310a-4617-af56-9b8a3ac3c616" />
 
 ### Watchlist
 
-_Screenshot placeholder._
+<img width="1909" height="839" alt="Screenshot 2026-10-01 211505" src="https://github.com/user-attachments/assets/0b449c39-42ec-4c9e-b5b5-2473b56b66a3" />
 
 ### Alerts
 
-_Screenshot placeholder._
+<img width="1909" height="845" alt="Screenshot 2026-10-01 211320" src="https://github.com/user-attachments/assets/dcab3f10-c114-453e-97d5-8f888b7d81ac" />
 
 ### Map View
 
-_Screenshot placeholder._
+<img width="1916" height="834" alt="Screenshot 2026-10-01 211425" src="https://github.com/user-attachments/assets/0b68d367-5530-4311-a451-98337c4b0dc3" />
 
 ### Login Screen
 
-_Screenshot placeholder._
+<img width="1878" height="830" alt="Screenshot 2026-10-01 210819" src="https://github.com/user-attachments/assets/ae7fcaa8-0603-4b8f-9519-f37e36ed689b" />
